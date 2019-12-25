@@ -1,7 +1,8 @@
-import {Component, OnInit} from '@angular/core';
-import {FormControl, FormGroup, Validators} from '@angular/forms';
-import {PlacesService} from '../../places.service';
-import {Router} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { PlacesService } from '../../places.service';
+import { Router } from '@angular/router';
+import { LoadingController } from '@ionic/angular';
 
 @Component({
     selector: 'app-add',
@@ -11,7 +12,7 @@ import {Router} from '@angular/router';
 export class AddPage implements OnInit {
     form: FormGroup;
 
-    constructor(private placesService: PlacesService, private router: Router) {
+    constructor(private placesService: PlacesService, private router: Router, private loadingController: LoadingController) {
     }
 
     ngOnInit() {
@@ -43,17 +44,22 @@ export class AddPage implements OnInit {
         if (!this.form.valid) {
             return;
         }
-
-        this.placesService.addPlace(
-            this.form.value.title,
-            this.form.value.description,
-            'https://i.pinimg.com/originals/9c/88/44/9c8844b217bdb6c17db14f51ad2e51a5.jpg',
-            +this.form.value.price,
-            new Date(this.form.value.dateFrom),
-            new Date(this.form.value.dateTo)
-        );
-        this.form.reset();
-        this.router.navigate(['/places/tabs/offers']);
+        this.loadingController.create({
+            message: 'Creating place...'
+        }).then(loadingEl => {
+            loadingEl.present();
+            this.placesService.addPlace(
+                this.form.value.title,
+                this.form.value.description,
+                'https://i.pinimg.com/originals/9c/88/44/9c8844b217bdb6c17db14f51ad2e51a5.jpg',
+                +this.form.value.price,
+                new Date(this.form.value.dateFrom),
+                new Date(this.form.value.dateTo)
+            ).subscribe(() => {
+                loadingEl.dismiss();
+                this.form.reset();
+                this.router.navigate(['/places/tabs/offers']);
+            });
+        });
     }
-
 }

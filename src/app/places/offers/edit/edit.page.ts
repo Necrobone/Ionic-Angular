@@ -1,10 +1,10 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {Place} from '../../place.model';
-import {ActivatedRoute} from '@angular/router';
-import {NavController} from '@ionic/angular';
-import {PlacesService} from '../../places.service';
-import {FormControl, FormGroup, Validators} from '@angular/forms';
-import {Subscription} from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Place } from '../../place.model';
+import { ActivatedRoute, Router } from '@angular/router';
+import { LoadingController, NavController } from '@ionic/angular';
+import { PlacesService } from '../../places.service';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-edit',
@@ -16,7 +16,12 @@ export class EditPage implements OnInit, OnDestroy {
     form: FormGroup;
     private placeSub: Subscription;
 
-    constructor(private route: ActivatedRoute, private navCtrl: NavController, private placesService: PlacesService) {
+    constructor(
+        private route: ActivatedRoute,
+        private navCtrl: NavController,
+        private placesService: PlacesService,
+        private router: Router,
+        private loadingController: LoadingController) {
     }
 
     ngOnInit() {
@@ -46,7 +51,17 @@ export class EditPage implements OnInit, OnDestroy {
         if (!this.form.valid) {
             return;
         }
-        console.log(this.form);
+
+        this.loadingController.create({
+            message: 'Updating place...'
+        }).then(loadingEl => {
+            loadingEl.present();
+            this.placesService.editPlace(this.place.id, this.form.value.title, this.form.value.description).subscribe(() => {
+                loadingEl.dismiss();
+                this.form.reset();
+                this.router.navigate(['/places/tabs/offers']);
+            });
+        });
     }
 
     ngOnDestroy(): void {
