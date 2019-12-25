@@ -1,10 +1,11 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {ActionSheetController, ModalController, NavController} from '@ionic/angular';
-import {Place} from '../../place.model';
-import {PlacesService} from '../../places.service';
-import {AddComponent} from '../../../bookings/add/add.component';
-import {Subscription} from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ActionSheetController, LoadingController, ModalController, NavController } from '@ionic/angular';
+import { Place } from '../../place.model';
+import { PlacesService } from '../../places.service';
+import { AddComponent } from '../../../bookings/add/add.component';
+import { Subscription } from 'rxjs';
+import { BookingService } from '../../../bookings/booking.service';
 
 @Component({
     selector: 'app-view',
@@ -21,7 +22,9 @@ export class ViewPage implements OnInit, OnDestroy {
         private navCtrl: NavController,
         private placesService: PlacesService,
         private modalController: ModalController,
-        private actionSheetController: ActionSheetController
+        private actionSheetController: ActionSheetController,
+        private bookingService: BookingService,
+        private loadingController: LoadingController,
     ) {
     }
 
@@ -73,7 +76,24 @@ export class ViewPage implements OnInit, OnDestroy {
             }).then(resultData => {
             console.log(resultData.data, resultData.role);
             if (resultData.role === 'confirm') {
-                console.log('BOOKED');
+                this.loadingController.create({
+                    message: 'Booking place...'
+                }).then(loadingEl => {
+                    loadingEl.present();
+                    const data = resultData.data.bookingData;
+                    this.bookingService.addBooking(
+                        this.place.id,
+                        this.place.title,
+                        this.place.imageUrl,
+                        data.firstName,
+                        data.lastName,
+                        data.guestNumber,
+                        data.startDate,
+                        data.endDate
+                    ).subscribe(() => {
+                        loadingEl.dismiss();
+                    });
+                });
             }
         });
     }
