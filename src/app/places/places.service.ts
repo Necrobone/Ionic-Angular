@@ -76,19 +76,30 @@ export class PlacesService {
 
     addPlace(title: string, description: string, imageUrl: string, price: number, dateFrom: Date, dateTo: Date) {
         let generatedId: string;
-        const newPlace = new Place(
-            Math.random().toString(),
-            title,
-            description,
-            imageUrl,
-            price,
-            dateFrom,
-            dateTo,
-            this.authService.userId
-        );
-        return this.http
-            .post<{ name: string }>('https://ionic-5c5e9.firebaseio.com/offered-places.json', {...newPlace, id: null})
+        let newPlace: Place;
+        return this.authService.userId
             .pipe(
+                take(1),
+                switchMap(userId => {
+                    if (!userId) {
+                        throw new Error('No user found!');
+                    }
+
+                    newPlace = new Place(
+                        Math.random().toString(),
+                        title,
+                        description,
+                        imageUrl,
+                        price,
+                        dateFrom,
+                        dateTo,
+                        userId
+                    );
+                    return this.http.post<{ name: string }>(
+                        'https://ionic-5c5e9.firebaseio.com/offered-places.json',
+                        {...newPlace, id: null}
+                    );
+                }),
                 switchMap(resData => {
                     generatedId = resData.name;
                     return this.places;

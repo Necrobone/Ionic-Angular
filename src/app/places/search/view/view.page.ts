@@ -7,6 +7,7 @@ import { AddComponent } from '../../../bookings/add/add.component';
 import { Subscription } from 'rxjs';
 import { BookingService } from '../../../bookings/booking.service';
 import { AuthService } from '../../../auth/auth.service';
+import { switchMap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-view',
@@ -42,24 +43,37 @@ export class ViewPage implements OnInit, OnDestroy {
             }
 
             this.isLoading = true;
-            this.placesService.getPlace(paramMap.get('placeId')).subscribe(place => {
-                this.place = place;
-                this.isBookable = place.userId !== this.authService.userId;
-                this.isLoading = false;
-            }, error => {
-                this.alertController.create({
-                    header: 'An error ocurred!',
-                    message: 'Could not load place.',
-                    buttons: [{
-                        text: 'Okay',
-                        handler: () => {
-                            this.router.navigate(['/places/tabs/search']);
+            let fetchedUserId: string;
+            this.authService.userId
+                .pipe(
+                    switchMap(userId => {
+                        if (!userId) {
+                            throw new Error('Found no user!');
                         }
-                    }]
-                }).then(alertEl => {
-                    alertEl.present();
+
+                        fetchedUserId = userId;
+
+                        return this.placesService.getPlace(paramMap.get('placeId'));
+                    })
+                )
+                .subscribe(place => {
+                    this.place = place;
+                    this.isBookable = place.userId !== fetchedUserId;
+                    this.isLoading = false;
+                }, error => {
+                    this.alertController.create({
+                        header: 'An error ocurred!',
+                        message: 'Could not load place.',
+                        buttons: [{
+                            text: 'Okay',
+                            handler: () => {
+                                this.router.navigate(['/places/tabs/search']);
+                            }
+                        }]
+                    }).then(alertEl => {
+                        alertEl.present();
+                    });
                 });
-            });
         });
     }
 

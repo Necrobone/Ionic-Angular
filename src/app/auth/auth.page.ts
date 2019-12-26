@@ -3,6 +3,8 @@ import { AuthService } from './auth.service';
 import { Router } from '@angular/router';
 import { AlertController, LoadingController } from '@ionic/angular';
 import { NgForm } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { AuthResponseData } from './auth.service';
 
 @Component({
     selector: 'app-auth',
@@ -22,21 +24,41 @@ export class AuthPage implements OnInit {
     ngOnInit() {}
 
     authenticate(email: string, password: string) {
-        this.authService.login();
         this.loadingController.create({
             keyboardClose: true,
             message: 'Logging in...'
         }).then(loadingEl => {
             loadingEl.present();
-            this.authService.signup(email, password).subscribe(resData => {
+            let authObs: Observable<AuthResponseData>;
+
+            if (this.isLogin) {
+                authObs = this.authService.login(email, password);
+            } else {
+                authObs = this.authService.signup(email, password);
+            }
+
+            authObs.subscribe(resData => {
                 loadingEl.dismiss();
                 this.router.navigateByUrl('/places/tabs/search');
             }, error => {
                 loadingEl.dismiss();
                 const code = error.error.error.message;
-                let message = 'Could not sign you up, please try again';
+                let message;
+                switch (code) {
+                    case 'EMAIL_EXISTS':
+                        message = 'This email address exists already';
+                        break;
+                    case 'EMAIL_NOT_FOUND':
+                        message = 'Email address could not be found';
+                        break;
+                    case 'INVALID_PASSWORD':
+                        message = 'This password is not correct';
+                        break;
+                    default:
+                        message = 'Could not sign you up, please try again';
+                        break;
+                }
                 if (code === 'EMAIL_EXISTS') {
-                    message = 'This email address exists already';
                 }
                 this.showAlert(message);
             });
