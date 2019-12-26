@@ -7,7 +7,7 @@ import { AddComponent } from '../../../bookings/add/add.component';
 import { Subscription } from 'rxjs';
 import { BookingService } from '../../../bookings/booking.service';
 import { AuthService } from '../../../auth/auth.service';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, take } from 'rxjs/operators';
 
 @Component({
     selector: 'app-view',
@@ -46,6 +46,7 @@ export class ViewPage implements OnInit, OnDestroy {
             let fetchedUserId: string;
             this.authService.userId
                 .pipe(
+                    take(1),
                     switchMap(userId => {
                         if (!userId) {
                             throw new Error('Found no user!');
