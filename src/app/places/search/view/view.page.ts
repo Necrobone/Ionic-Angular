@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { ActionSheetController, LoadingController, ModalController, NavController } from '@ionic/angular';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ActionSheetController, AlertController, LoadingController, ModalController, NavController } from '@ionic/angular';
 import { Place } from '../../place.model';
 import { PlacesService } from '../../places.service';
 import { AddComponent } from '../../../bookings/add/add.component';
@@ -17,6 +17,7 @@ import { AuthService } from '../../../auth/auth.service';
 export class ViewPage implements OnInit, OnDestroy {
     place: Place;
     isBookable = false;
+    isLoading = false;
     private placeSub: Subscription;
 
     constructor(
@@ -28,6 +29,8 @@ export class ViewPage implements OnInit, OnDestroy {
         private bookingService: BookingService,
         private loadingController: LoadingController,
         private authService: AuthService,
+        private alertController: AlertController,
+        private router: Router,
     ) {
     }
 
@@ -38,9 +41,24 @@ export class ViewPage implements OnInit, OnDestroy {
                 return;
             }
 
+            this.isLoading = true;
             this.placesService.getPlace(paramMap.get('placeId')).subscribe(place => {
                 this.place = place;
                 this.isBookable = place.userId !== this.authService.userId;
+                this.isLoading = false;
+            }, error => {
+                this.alertController.create({
+                    header: 'An error ocurred!',
+                    message: 'Could not load place.',
+                    buttons: [{
+                        text: 'Okay',
+                        handler: () => {
+                            this.router.navigate(['/places/tabs/search']);
+                        }
+                    }]
+                }).then(alertEl => {
+                    alertEl.present();
+                });
             });
         });
     }
