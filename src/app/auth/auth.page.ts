@@ -1,8 +1,8 @@
-import {Component, OnInit} from '@angular/core';
-import {AuthService} from './auth.service';
-import {Router} from '@angular/router';
-import {LoadingController} from '@ionic/angular';
-import {NgForm} from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
+import { AuthService } from './auth.service';
+import { Router } from '@angular/router';
+import { AlertController, LoadingController } from '@ionic/angular';
+import { NgForm } from '@angular/forms';
 
 @Component({
     selector: 'app-auth',
@@ -12,21 +12,34 @@ import {NgForm} from '@angular/forms';
 export class AuthPage implements OnInit {
     isLogin = true;
 
-    constructor(private authService: AuthService, private router: Router, private loadingController: LoadingController) {}
+    constructor(
+        private authService: AuthService,
+        private router: Router,
+        private loadingController: LoadingController,
+        private alertController: AlertController
+    ) {}
 
     ngOnInit() {}
 
-    onLogin() {
+    authenticate(email: string, password: string) {
         this.authService.login();
         this.loadingController.create({
             keyboardClose: true,
             message: 'Logging in...'
         }).then(loadingEl => {
             loadingEl.present();
-            setTimeout(() => {
+            this.authService.signup(email, password).subscribe(resData => {
                 loadingEl.dismiss();
                 this.router.navigateByUrl('/places/tabs/search');
-            }, 1500);
+            }, error => {
+                loadingEl.dismiss();
+                const code = error.error.error.message;
+                let message = 'Could not sign you up, please try again';
+                if (code === 'EMAIL_EXISTS') {
+                    message = 'This email address exists already';
+                }
+                this.showAlert(message);
+            });
         });
     }
 
@@ -38,16 +51,20 @@ export class AuthPage implements OnInit {
         const email = form.value.email;
         const password = form.value.password;
 
-        console.log(email, password);
-
-        if (this.isLogin) {
-            // send a request to login servers
-        } else {
-            // send a request to signup servers
-        }
+        this.authenticate(email, password);
     }
 
     onSwitchAuthMode() {
         this.isLogin = !this.isLogin;
+    }
+
+    private showAlert(message: string) {
+        return this.alertController.create({
+            header: 'Authentication failed',
+            message: message,
+            buttons: ['Okay']
+        }).then(alertEl => {
+            alertEl.present();
+        });
     }
 }
