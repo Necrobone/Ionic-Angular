@@ -1,0 +1,8 @@
+{
+  "appId": "com.necrosoftware.angular",
+  "appName": "Ionic-Angular",
+  "bundledWebRuntime": false,
+  "npmClient": "npm",
+  "webDir": "www",
+  "cordova": {}
+}
